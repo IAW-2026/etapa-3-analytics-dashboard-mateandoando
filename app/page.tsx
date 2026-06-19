@@ -19,15 +19,25 @@ async function getShippingMetrics() {
   }
 }
 
+async function getSellerMetrics() {
+  const sellerUrl = process.env.NEXT_PUBLIC_SELLER_URL || "http://localhost:3000";
+  const apiKey = process.env.SELLER_API_KEY || "";
+  try {
+    const res = await fetch(`${sellerUrl}/api/sellers/analytics`, {
+      headers: { "x-api-key": apiKey },
+      cache: "no-store", 
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
+}
+
 // TODO: Reemplazar con llamadas reales cuando los otros equipos terminen sus endpoints
 async function getBuyerMetrics() {
   // Simulación temporal
   return { total_users: 142, active_today: 15 };
-}
-
-async function getSellerMetrics() {
-  // Simulación temporal
-  return { total_orders: 89, active_products: 34 };
 }
 
 async function getPaymentsMetrics() {
@@ -110,14 +120,14 @@ export default async function AnalyticsDashboard() {
               </div>
             </div>
 
-            {/* 2. SELLER APP */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Órdenes Generadas</h3>
+            {/* 2. SELLER APP (Datos Reales) - Iluminada en verde */}
+            <div className={`p-6 rounded-2xl shadow-sm border ${sellerData ? 'bg-[#C6E0B4] border-[#a8c994]' : 'bg-white border-zinc-200'}`}>
+              <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${sellerData ? 'text-[#1E3F20]' : 'text-zinc-500'}`}>Órdenes Generadas</h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-[#1E3F20]">
-                  {sellerData.total_orders}
+                  {sellerData ? sellerData.general.total_ordenes_validas : 0}
                 </span>
-                <span className="text-zinc-400 text-sm font-medium">pedidos</span>
+                <span className={`text-sm font-medium ${sellerData ? 'text-[#1E3F20] opacity-80' : 'text-zinc-400'}`}>pedidos</span>
               </div>
             </div>
 
@@ -155,9 +165,9 @@ export default async function AnalyticsDashboard() {
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
                 <span className="text-sm font-medium text-zinc-600">Buyer API (Mock)</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-                <span className="text-sm font-medium text-zinc-600">Seller API (Mock)</span>
+             <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${sellerData ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                <span className="text-sm font-medium text-zinc-600">Seller API</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-full ${shippingData ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
