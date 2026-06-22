@@ -1,6 +1,5 @@
 // app/page.tsx
-import { ReactNode } from "react";
-import Link from "next/link";
+import Sidebar from "./components/Sidebar";
 
 // --- 1. FUNCIONES DE FETCH (Las 4 APIs del sistema) ---
 
@@ -34,10 +33,19 @@ async function getSellerMetrics() {
   }
 }
 
-// TODO: Reemplazar con llamadas reales cuando los otros equipos terminen sus endpoints
 async function getBuyerMetrics() {
-  // Simulación temporal
-  return { total_users: 142, active_today: 15 };
+  const buyerUrl = process.env.NEXT_PUBLIC_BUYER_URL || "https://proyecto-c-buyer2-mateandoando.vercel.app";
+  const apiKey = process.env.BUYER_API_KEY || "";
+  try {
+    const res = await fetch(`${buyerUrl}/api/metrics/engagement`, {
+      headers: { "x-api-key": apiKey },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
 }
 
 async function getPaymentsMetrics() {
@@ -59,38 +67,7 @@ export default async function AnalyticsDashboard() {
   return (
     <div className="flex min-h-screen bg-[#FDFBF7] font-sans text-zinc-800">
       
-      {/* BARRA LATERAL */}
-      <aside className="w-64 bg-white border-r border-zinc-200 hidden md:flex flex-col">
-        <div className="p-6 border-b border-zinc-100">
-          <h2 className="text-[#1E3F20] font-bold text-xl tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-            MateandoAndo
-          </h2>
-          <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Analytics</p>
-        </div>
-        
-        <nav className="flex-1 px-4 py-6 space-y-1.5">
-          <Link href="/" className="block px-4 py-3 rounded-xl bg-[#e6f2dc] text-[#1E3F20] font-bold text-sm transition-colors border border-[#cbe1bc]">
-            Dashboard General
-          </Link>
-          
-          <div className="pt-4 pb-2 px-4">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Reportes por Módulo</span>
-          </div>
-
-          <Link href="/compras" className="block px-4 py-2.5 rounded-xl text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 font-medium text-sm transition-colors">
-            Resumen de compras
-          </Link>
-          <Link href="/ventas" className="block px-4 py-2.5 rounded-xl text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 font-medium text-sm transition-colors">
-            Resumen de ventas
-          </Link>
-          <Link href="/envios" className="block px-4 py-2.5 rounded-xl text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 font-medium text-sm transition-colors">
-            Resumen de envíos
-          </Link>
-          <Link href="/pagos" className="block px-4 py-2.5 rounded-xl text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 font-medium text-sm transition-colors">
-            Resumen de pagos
-          </Link>
-        </nav>
-      </aside>
+      <Sidebar />
 
       {/* CONTENIDO PRINCIPAL */}
       <main className="flex-1 p-8 sm:p-12 overflow-y-auto">
@@ -110,13 +87,13 @@ export default async function AnalyticsDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* 1. BUYER APP */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Compradores Registrados</h3>
+            <div className={`p-6 rounded-2xl shadow-sm border ${buyerData ? 'bg-[#C6E0B4] border-[#a8c994]' : 'bg-white border-zinc-200'}`}>
+              <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${buyerData ? 'text-[#1E3F20]' : 'text-zinc-500'}`}>Compradores Registrados</h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-[#1E3F20]">
-                  {buyerData.total_users}
+                  {buyerData?.total_users ?? '—'}
                 </span>
-                <span className="text-zinc-400 text-sm font-medium">usuarios</span>
+                <span className={`text-sm font-medium ${buyerData ? 'text-[#1E3F20] opacity-80' : 'text-zinc-400'}`}>usuarios</span>
               </div>
             </div>
 
@@ -162,8 +139,8 @@ export default async function AnalyticsDashboard() {
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-                <span className="text-sm font-medium text-zinc-600">Buyer API (Mock)</span>
+                <span className={`h-2.5 w-2.5 rounded-full ${buyerData ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                <span className="text-sm font-medium text-zinc-600">Buyer API</span>
               </div>
              <div className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-full ${sellerData ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
