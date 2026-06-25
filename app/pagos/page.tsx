@@ -1,5 +1,6 @@
 // app/pagos/page.tsx
 import Sidebar from "../components/Sidebar";
+import InsightIA from "../components/InsightIA";
 
 async function getPaymentsMetrics() {
   // Asegurate de tener estas variables en el .env de la Analytics App
@@ -43,6 +44,7 @@ export default async function PagosPage() {
           </div>
         ) : (
           <div className="space-y-10">
+            <InsightIA datosReales={data} tipo="pagos"/>
             {/* TARJETAS DE MÉTRICAS */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               

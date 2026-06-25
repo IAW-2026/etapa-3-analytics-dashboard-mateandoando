@@ -1,6 +1,7 @@
 //app/ventas/page.tsx
 import Link from "next/link";
 import Sidebar from "../components/Sidebar";
+import InsightIA from "../components/InsightIA";
 
 async function getSellerMetrics() {
   const sellerUrl = process.env.NEXT_PUBLIC_SELLER_URL || "http://localhost:3000";
@@ -43,6 +44,7 @@ export default async function VentasDashboard() {
           </div>
         ) : (
           <div className="space-y-10">
+            <InsightIA datosReales={analyticsData} tipo="ventas"/>
             {/* TARGETAS DE MÉTRICAS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="bg-[#C6E0B4] p-6 rounded-2xl shadow-sm border border-[#a8c994]">

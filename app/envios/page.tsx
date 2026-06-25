@@ -3,6 +3,7 @@ import Link from "next/link";
 import Sidebar from "../components/Sidebar";
 import ShippingCharts from "../components/ShippingCharts";
 import RefreshButton from "../components/RefreshButtonShipping"; 
+import InsightIA from "../components/InsightIA";
 
 async function getShippingMetrics() {
   const shippingUrl = process.env.NEXT_PUBLIC_SHIPPING_URL || "https://proyecto-c-shipping-mateandoando.vercel.app";
@@ -61,7 +62,7 @@ export default async function LogisticaDashboard() {
           </div>
         ) : (
           <div className="space-y-8">
-            
+            {analyticsData && <InsightIA datosReales={analyticsData} tipo="logistica" />}
             {/* CARD KPIS SUPERIORES */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               
