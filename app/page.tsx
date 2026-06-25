@@ -90,7 +90,6 @@ export default async function AnalyticsDashboard() {
     (item: { status: string; count: number }) => item.status === "APROBADO"
   )?.count ?? 0;
   
-  // Protección matemática por si las DBs están desincronizadas (ej: más pagos que órdenes)
   const maxFunnel = Math.max(totalOrdenes, totalPagosAprobados, 1);
   const anchoOrdenes = Math.round((totalOrdenes / maxFunnel) * 100);
   const anchoPagos = Math.round((totalPagosAprobados / maxFunnel) * 100);
@@ -100,7 +99,6 @@ export default async function AnalyticsDashboard() {
   // 2. Datos de Costo Logístico
   const revenueTotal = paymentsData?.financial_metrics?.total_revenue_ars ?? 0;
   const revenueProductos = sellerData?.general?.volumen_transaccionado_ars ?? 0;
-  // Lo que sobra entre lo que cobró Payments y lo que valen los productos, es el envío.
   const costoLogisticoEstimado = Math.max(0, revenueTotal - revenueProductos); 
   const pctProductos = revenueTotal > 0 ? Math.round((revenueProductos / revenueTotal) * 100) : 0;
   const pctLogistica = revenueTotal > 0 ? Math.round((costoLogisticoEstimado / revenueTotal) * 100) : 0;
@@ -112,6 +110,10 @@ export default async function AnalyticsDashboard() {
   )?.count ?? 0;
   const pctEntregados = paquetesVendidos > 0 ? Math.round((paquetesEntregados / paquetesVendidos) * 100) : 0;
   const pctPendientes = paquetesVendidos > 0 ? 100 - pctEntregados : 0;
+
+  // 4. Datos de Gasto por Comprador Activo (Buyer + Payments)
+  const compradoresActivos = buyerData?.active_buyers ?? 0;
+  const gastoMedioPorComprador = compradoresActivos > 0 ? Math.round(revenueTotal / compradoresActivos) : 0;
 
   return (
     <div className="flex min-h-screen bg-[#FDFBF7] font-sans text-zinc-800">
@@ -279,6 +281,29 @@ export default async function AnalyticsDashboard() {
                 </div>
               </div>
 
+            </div>
+          </div>
+
+          {/* NUEVO INDICADOR: VALOR DEL CLIENTE (Abajo de los gráficos) */}
+          <div className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1E3F20]" style={{ fontFamily: 'Georgia, serif' }}>
+                Inversión por Comprador Activo
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1">Gasto total acumulado promedio por cada usuario con compras aprobadas.</p>
+              
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-extrabold text-[#1E3F20]">
+                  ${gastoMedioPorComprador.toLocaleString('es-AR')}
+                </span>
+                <span className="text-zinc-500 text-sm font-medium">ARS / Cliente</span>
+              </div>
+            </div>
+            
+            {/* Mini kpi de contexto */}
+            <div className="text-right bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+              <span className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Base de Clientes</span>
+              <span className="text-xl font-extrabold text-zinc-700">{compradoresActivos} activos</span>
             </div>
           </div>
 
