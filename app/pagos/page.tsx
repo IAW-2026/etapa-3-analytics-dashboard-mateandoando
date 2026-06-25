@@ -3,8 +3,8 @@ import Sidebar from "../components/Sidebar";
 
 async function getPaymentsMetrics() {
   // Asegurate de tener estas variables en el .env de la Analytics App
-  const paymentsUrl = process.env.NEXT_PUBLIC_PAYMENTS_URL || "https://tu-payment-app.vercel.app";
-  const apiKey = process.env.PAYMENTS_API_KEY || ""; 
+  const paymentsUrl = process.env.NEXT_PUBLIC_PAYMENTS_URL || "proyecto-c-payments-mateandoando.vercel.app";
+  const apiKey = process.env.ANALYTICS_PAYMENTS_API_KEY || ""; 
 
   try {
     const res = await fetch(`${paymentsUrl}/api/payments/analytics`, {
