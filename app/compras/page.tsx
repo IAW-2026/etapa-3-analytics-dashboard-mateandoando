@@ -1,6 +1,6 @@
 // app/compras/page.tsx
 import Sidebar from "../components/Sidebar";
-
+import InsightIA from "../components/InsightIA";
 async function getBuyerMetrics() {
   const buyerUrl = process.env.NEXT_PUBLIC_BUYER_URL || "https://proyecto-c-buyer2-mateandoando.vercel.app";
   const apiKey = process.env.BUYER_API_KEY || "";
@@ -41,6 +41,7 @@ export default async function ComprasPage() {
           </div>
         ) : (
           <div className="space-y-10">
+            {data && <InsightIA datosReales={data} tipo="compras"/>}
             {/* TARJETAS DE MÉTRICAS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="bg-[#C6E0B4] p-6 rounded-2xl shadow-sm border border-[#a8c994]">

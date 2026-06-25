@@ -1,5 +1,6 @@
 // app/page.tsx
 import Sidebar from "./components/Sidebar";
+import InsightIA from "./components/InsightIA";
 
 // --- 1. FUNCIONES DE FETCH (Las 4 APIs del sistema) ---
 
@@ -74,6 +75,12 @@ export default async function AnalyticsDashboard() {
     getSellerMetrics(),
     getPaymentsMetrics()
   ]);
+  const metricasConsolidadas = {
+    compradores: buyerData,
+    ventas: sellerData,
+    logistica: shippingData,
+    pagos: paymentsData
+  };
 
   return (
     <div className="flex min-h-screen bg-[#FDFBF7] font-sans text-zinc-800">
@@ -91,7 +98,7 @@ export default async function AnalyticsDashboard() {
             <p className="text-zinc-600">Métricas consolidadas de todos los módulos en tiempo real.</p>
           </div>
         </div>
-
+        <InsightIA datosReales={metricasConsolidadas} tipo="general" />
         <div className="space-y-10">
           
           {/* GRILLA DE LOS 4 MÓDULOS */}
