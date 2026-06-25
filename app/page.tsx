@@ -49,8 +49,19 @@ async function getBuyerMetrics() {
 }
 
 async function getPaymentsMetrics() {
-  // Simulación temporal
-  return { total_revenue: 1250000, successful_transactions: 85 };
+  const paymentsUrl = process.env.NEXT_PUBLIC_PAYMENTS_URL || "https://proyecto-c-payments-mateandoando.vercel.app";
+  const apiKey = process.env.ANALYTICS_PAYMENTS_API_KEY || ""; 
+  
+  try {
+    const res = await fetch(`${paymentsUrl}/api/payments/analytics`, {
+      headers: { "x-api-key": apiKey },
+      cache: "no-store", 
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
 }
 
 // --- 2. LA PÁGINA PRINCIPAL DEL DASHBOARD ---
@@ -120,13 +131,15 @@ export default async function AnalyticsDashboard() {
             </div>
 
             {/* 4. PAYMENTS APP */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200">
-              <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Volumen Transaccionado</h3>
+            <div className={`p-6 rounded-2xl shadow-sm border ${paymentsData ? 'bg-[#C6E0B4] border-[#a8c994]' : 'bg-white border-zinc-200'}`}>
+              <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${paymentsData ? 'text-[#1E3F20]' : 'text-zinc-500'}`}>Volumen Transaccionado</h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-[#1E3F20]">
-                  ${(paymentsData.total_revenue / 1000).toFixed(1)}k
+                  ${paymentsData?.financial_metrics?.total_revenue_ars 
+                      ? (paymentsData.financial_metrics.total_revenue_ars / 1000).toFixed(1) 
+                      : '—'}k
                 </span>
-                <span className="text-zinc-400 text-sm font-medium">ARS</span>
+                <span className={`text-sm font-medium ${paymentsData ? 'text-[#1E3F20] opacity-80' : 'text-zinc-400'}`}>ARS</span>
               </div>
             </div>
 
@@ -151,8 +164,8 @@ export default async function AnalyticsDashboard() {
                 <span className="text-sm font-medium text-zinc-600">Shipping API</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
-                <span className="text-sm font-medium text-zinc-600">Payments API (Mock)</span>
+                <span className={`h-2.5 w-2.5 rounded-full ${paymentsData ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                <span className="text-sm font-medium text-zinc-600">Payments API</span>
               </div>
             </div>
           </div>
