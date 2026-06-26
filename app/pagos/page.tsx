@@ -1,4 +1,5 @@
 // app/pagos/page.tsx
+export const dynamic = 'force-dynamic'; // <-- Desactiva la caché estática de Next.js
 import Sidebar from "../components/Sidebar";
 import InsightIA from "../components/InsightIA";
 
@@ -20,7 +21,6 @@ async function getPaymentsMetrics() {
 }
 
 export default async function PagosPage(props: { searchParams: any }) {
-  // Soportamos de manera segura el manejo de searchParams para cualquier versión de Next.js
   const resolvedParams = props.searchParams instanceof Promise ? await props.searchParams : props.searchParams;
   const periodo = resolvedParams?.periodo || "semanal";
 
@@ -28,12 +28,19 @@ export default async function PagosPage(props: { searchParams: any }) {
   const totalTx = data?.financial_metrics?.total_processed_transactions || 1;
   const timeline = data?.sales_timeline || [];
 
+  // --- NUEVA LÓGICA DE HUSO HORARIO (UTC-3) ---
+  const ajustarHoraArgentina = (fechaStringOrDate: string | Date) => {
+    const d = new Date(fechaStringOrDate);
+    d.setHours(d.getHours() - 3);
+    return d;
+  };
+
+  // Obtenemos la fecha actual real y la ajustamos a nuestra zona horaria
+  const fechaActual = ajustarHoraArgentina(new Date());
+
   // --- LÓGICA DE PROCESAMIENTO TEMPORAL ---
   let graficosDatos: { label: string; count: number; monto: number }[] = [];
   
-  // Usamos el 25 de Junio de 2026 como fecha de referencia para las muestras
-  const fechaActual = new Date('2026-06-25T23:59:59.000Z');
-
   if (periodo === "semanal") {
     // Últimos 7 días corridos (Agrupados por Día)
     for (let i = 6; i >= 0; i--) {
@@ -42,7 +49,10 @@ export default async function PagosPage(props: { searchParams: any }) {
       const fechaStr = d.toISOString().split('T')[0];
       const label = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
       
-      const txsDelDia = timeline.filter((t: any) => t.date.startsWith(fechaStr));
+      const txsDelDia = timeline.filter((t: any) => {
+        const txDate = ajustarHoraArgentina(t.date);
+        return txDate.toISOString().split('T')[0] === fechaStr;
+      });
       const monto = txsDelDia.reduce((sum: number, t: any) => sum + t.price, 0);
       graficosDatos.push({ label, count: txsDelDia.length, monto });
     }
@@ -52,12 +62,12 @@ export default async function PagosPage(props: { searchParams: any }) {
       { label: "Sem. 1 (1-7)", inicio: 1, fin: 7 },
       { label: "Sem. 2 (8-14)", inicio: 8, fin: 14 },
       { label: "Sem. 3 (15-21)", inicio: 15, fin: 21 },
-      { label: "Sem. 4 (22-25)", inicio: 22, fin: 25 },
+      { label: "Sem. 4 (22-31)", inicio: 22, fin: 31 }, 
     ];
 
     semanas.forEach(sem => {
       const txsSemana = timeline.filter((t: any) => {
-        const d = new Date(t.date);
+        const d = ajustarHoraArgentina(t.date);
         return d.getMonth() === 5 && d.getDate() >= sem.inicio && d.getDate() <= sem.fin;
       });
       const monto = txsSemana.reduce((sum: number, t: any) => sum + t.price, 0);
@@ -68,7 +78,7 @@ export default async function PagosPage(props: { searchParams: any }) {
     const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun"];
     meses.forEach((mes, index) => {
       const txsMes = timeline.filter((t: any) => {
-        const d = new Date(t.date);
+        const d = ajustarHoraArgentina(t.date);
         return d.getFullYear() === 2026 && d.getMonth() === index;
       });
       const monto = txsMes.reduce((sum: number, t: any) => sum + t.price, 0);
