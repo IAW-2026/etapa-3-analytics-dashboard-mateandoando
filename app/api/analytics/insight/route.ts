@@ -1,68 +1,48 @@
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/analytics/insight/route.ts
+import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-
-// Diccionario de contextos según la página que invoca a la IA
-const CONFIGURACION_PROMPTS: Record<string, { rol: string; enfoque: string }> = {
-  general: {
-    rol: "un Director de Operaciones (COO) senior",
-    enfoque: "la salud global del ecosistema cruzando usuarios, órdenes generadas, logística y estado de los servicios."
-  },
-  ventas: {
-    rol: "un Analista Comercial y de Ingresos senior",
-    enfoque: "el rendimiento financiero, el ticket promedio, los artículos vendidos y los motivos de pérdida de conversión por cancelaciones."
-  },
-  compras: {
-    rol: "un Experto en Growth Marketing y Conversión",
-    enfoque: "el engagement de los compradores, la tasa de conversión de registros a usuarios activos y el comportamiento del consumidor."
-  },
-  logistica: {
-    rol: "un Gerente de Cadena de Suministro y Distribución",
-    enfoque: "la eficiencia de los envíos, la proporción de paquetes entregados frente a los problemas en tránsito y el rendimiento del correo."
-  },
-  pagos: {
-    rol: "an Auditor Financiero y Especialista en Pasarelas de Pago senior",
-    enfoque: "el volumen transaccionado, la facturación total en ARS, las métricas financieras críticas y la tasa de éxito o problemas con la Payments API."
-  }
-};
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { datos, tipo } = body;
 
-    if (!datos || !tipo || !CONFIGURACION_PROMPTS[tipo]) {
-      return NextResponse.json({ error: "Faltan parámetros o el tipo de reporte es inválido" }, { status: 400 });
+    if (!datos) {
+      return NextResponse.json({ error: "Faltan los datos para analizar" }, { status: 400 });
     }
 
+    // El .trim() es clave acá: elimina cualquier espacio invisible o salto de línea de tu .env
+    const apiKey = process.env.GEMINI_API_KEY?.trim(); 
+    if (!apiKey) {
+      return NextResponse.json({ error: "Falta configurar GEMINI_API_KEY en el servidor" }, { status: 500 });
+    }
+
+    // Inicializamos el cliente oficial de Gemini
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const datosEnTexto = JSON.stringify(datos, null, 2);
-    
-    // Obtenemos la configuración específica para esta página
-    const { rol, enfoque } = CONFIGURACION_PROMPTS[tipo];
 
-    const prompt = `
-      Sos ${rol} experto en e-commerce.
-      Tu tarea es evaluar las métricas en tiempo real que se te proporcionan y darle al usuario un insight estratégico, ultra directo y accionable.
-
-      Reporte actual de la sección (${tipo.toUpperCase()}):
-      ${datosEnTexto}
-
-      Reglas estrictas para tu respuesta:
-      1. Tu enfoque principal debe ser ${enfoque}.
-      2. Detectá el principal cuello de botella o la métrica más destacada y explicala en base a los números reales provistos.
-      3. Sé extremadamente directo. No saludes, no uses introducciones cordiales. Ve al grano.
-      4. Longitud máxima: 3 líneas de texto.
+    const promptTexto = `
+      Actúa como un analista de Business Intelligence experto en e-commerce.
+      A continuación te paso el reporte en formato JSON del módulo de "${tipo.toUpperCase()}":
+      
+      ${JSON.stringify(datos)}
+      
+      Tu tarea: Analizar los números más críticos y darle un consejo estratégico, advertencia comercial o insight de negocio al dueño de la tienda.
+      Reglas de formato obligatorias:
+      1. Sé extremadamente directo y conciso (máximo 30 a 40 palabras).
+      2. Nombra al menos 1 o 2 números específicos del JSON para respaldar tu consejo.
+      3. No uses saludos, ni introducciones, ni despidas. Empezá directamente con el análisis.
     `;
 
-    const result = await model.generateContent(prompt);
-    const textoInsight = result.response.text();
+    // Ejecutamos la petición a través del SDK
+    const result = await model.generateContent(promptTexto);
+    const response = await result.response;
+    const insightGenerado = response.text();
 
-    return NextResponse.json({ insight: textoInsight }, { status: 200 });
+    return NextResponse.json({ insight: insightGenerado.trim() });
 
   } catch (error) {
-    console.error("Error en API de insights:", error);
-    return NextResponse.json({ error: "Error interno del servidor analítico" }, { status: 500 });
+    console.error("Error generando insight:", error);
+    return NextResponse.json({ error: "Fallo interno en el servidor de IA" }, { status: 500 });
   }
 }
