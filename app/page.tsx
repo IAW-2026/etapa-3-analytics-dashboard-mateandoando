@@ -96,12 +96,15 @@ export default async function AnalyticsDashboard() {
   const tasaConversion = totalOrdenes > 0 ? Math.round((totalPagosAprobados / totalOrdenes) * 100) : (totalPagosAprobados > 0 ? 100 : 0);
   const tasaAbandono = totalOrdenes > 0 ? Math.max(0, 100 - tasaConversion) : 0;
 
-  // 2. Datos de Costo Logístico
+  // 2. Datos de Costo Logístico (CORREGIDO PARA USAR EL DATO REAL DE LA SHIPPING APP)
   const revenueTotal = paymentsData?.financial_metrics?.total_revenue_ars ?? 0;
   const revenueProductos = sellerData?.general?.volumen_transaccionado_ars ?? 0;
-  const costoLogisticoEstimado = Math.max(0, revenueTotal - revenueProductos); 
-  const pctProductos = revenueTotal > 0 ? Math.round((revenueProductos / revenueTotal) * 100) : 0;
-  const pctLogistica = revenueTotal > 0 ? Math.round((costoLogisticoEstimado / revenueTotal) * 100) : 0;
+  
+  const costoLogisticoReal = shippingData?.total_cost ?? 0; // Usamos el costo real que nos manda Dolores
+  const valorTotalOperacion = revenueProductos + costoLogisticoReal; // Sumamos ambos para sacar el 100% de la torta
+  
+  const pctProductos = valorTotalOperacion > 0 ? Math.round((revenueProductos / valorTotalOperacion) * 100) : 0;
+  const pctLogistica = valorTotalOperacion > 0 ? Math.round((costoLogisticoReal / valorTotalOperacion) * 100) : 0;
 
   // 3. Datos de Salud de la Cadena (Entregas)
   const paquetesVendidos = sellerData?.detailed?.total_paquetes_vendidos ?? 0;
@@ -246,7 +249,7 @@ export default async function AnalyticsDashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-amber-400"></span>
-                    Envíos (${(costoLogisticoEstimado/1000).toFixed(1)}k)
+                    Envíos (${(costoLogisticoReal/1000).toFixed(1)}k)
                   </div>
                 </div>
               </div>
