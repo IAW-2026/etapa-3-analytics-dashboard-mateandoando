@@ -96,15 +96,19 @@ export default async function AnalyticsDashboard() {
   const tasaConversion = totalOrdenes > 0 ? Math.round((totalPagosAprobados / totalOrdenes) * 100) : (totalPagosAprobados > 0 ? 100 : 0);
   const tasaAbandono = totalOrdenes > 0 ? Math.max(0, 100 - tasaConversion) : 0;
 
-  // 2. Datos de Costo Logístico (CORREGIDO PARA USAR EL DATO REAL DE LA SHIPPING APP)
+  // 2. Datos de Costo Logístico (CORREGIDO A INGRESOS REALES)
+  // La única verdad de cuánta plata entró es tu Payments App
   const revenueTotal = paymentsData?.financial_metrics?.total_revenue_ars ?? 0;
-  const revenueProductos = sellerData?.general?.volumen_transaccionado_ars ?? 0;
   
-  const costoLogisticoReal = shippingData?.total_cost ?? 0; // Usamos el costo real que nos manda Dolores
-  const valorTotalOperacion = revenueProductos + costoLogisticoReal; // Sumamos ambos para sacar el 100% de la torta
+  // El costo de logística real nos lo da la Shipping App
+  const costoLogisticoReal = shippingData?.total_cost ?? 0;
   
-  const pctProductos = valorTotalOperacion > 0 ? Math.round((revenueProductos / valorTotalOperacion) * 100) : 0;
-  const pctLogistica = valorTotalOperacion > 0 ? Math.round((costoLogisticoReal / valorTotalOperacion) * 100) : 0;
+  // El ingreso real por productos es: (Plata en el banco) - (Costo de envíos)
+  const revenueProductosReal = Math.max(0, revenueTotal - costoLogisticoReal);
+  
+  // Ahora calculamos los porcentajes basándonos estrictamente en tu revenueTotal (el 100%)
+  const pctProductos = revenueTotal > 0 ? Math.round((revenueProductosReal / revenueTotal) * 100) : 0;
+  const pctLogistica = revenueTotal > 0 ? Math.round((costoLogisticoReal / revenueTotal) * 100) : 0;
 
   // 3. Datos de Salud de la Cadena (Entregas)
   const paquetesVendidos = sellerData?.detailed?.total_paquetes_vendidos ?? 0;
@@ -245,7 +249,7 @@ export default async function AnalyticsDashboard() {
                 <div className="flex justify-between text-xs font-medium text-zinc-600">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-[#1E3F20]"></span>
-                    Valor Productos (${(revenueProductos/1000).toFixed(1)}k)
+                    Valor Productos (${(revenueProductosReal/1000).toFixed(1)}k)
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full bg-amber-400"></span>
